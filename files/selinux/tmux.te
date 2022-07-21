@@ -1,0 +1,10 @@
+module tmux 1.0;
+
+require {
+  type init_t;
+  type screen_exec_t;
+  class file execute;
+}
+
+#============= init_t ==============
+allow init_t screen_exec_t:file execute;

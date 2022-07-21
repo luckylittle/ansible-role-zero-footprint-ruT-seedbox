@@ -1,0 +1,117 @@
+---
+# tasks file for ansible-role-zero-footprint-ruT-seedbox
+- name: Install packages
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: present
+    disable_gpg_check: true
+  become: true
+  loop:
+    - lighttpd
+    - lighttpd-fastcgi
+    - php
+    - php-fpm
+    - php-json
+    - python3-passlib
+
+- name: Create a directory structure
+  ansible.builtin.file:
+    path: "/var/www/ruTorrent"
+    state: directory
+    owner: lighttpd
+    group: lighttpd
+  become: true
+
+- name: Unzip the rutorrent
+  ansible.builtin.unarchive:
+    src: "{{ rutorrent_dl }}"
+    dest: "/var/www/ruTorrent"
+    owner: lighttpd
+    group: lighttpd
+    remote_src: true
+  become: true
+
+- name: Stat rutorrent
+  ansible.builtin.stat:
+    path: "/var/www/ruTorrent/ruTorrent-{{ rutorrent_dl | urlsplit('path') | basename | regex_replace('^v') | regex_replace('.tar.gz') }}"
+  register: rutorrent_stat
+
+- name: Move rutorrent
+  ansible.builtin.shell: "mv -t /var/www/ruTorrent/ /var/www/ruTorrent/ruTorrent-{{ rutorrent_dl | urlsplit('path') | basename | regex_replace('^v') | regex_replace('.tar.gz') }}/*"
+  become: true
+  when: rutorrent_stat.stat.exists
+
+- name: Remove temporary directory
+  ansible.builtin.file:
+    path: "/var/www/ruTorrent/ruTorrent-{{ rutorrent_dl | urlsplit('path') | basename | regex_replace('^v') | regex_replace('.tar.gz') }}"
+    state: absent
+  become: true
+
+- name: Template the configuration for rutorrent
+  ansible.builtin.template:
+    src: rtorrent/config.php.j2
+    dest: /var/www/ruTorrent/conf/config.php
+    owner: lighttpd
+    group: lighttpd
+    backup: true
+  become: true
+
+- name: Disable unnecessary rutorrent plugins
+  ansible.builtin.lineinfile:
+    path: /var/www/ruTorrent/conf/plugins.ini
+    line: "{{ item }}"
+    create: yes
+  become: true
+  loop:
+    - "[_cloudflare] enabled = no"
+    - "[geoip] enabled = no"
+    - "[history] enabled = no"
+    - "[mediainfo] enabled = no"
+    - "[screenshots] enabled = no"
+    - "[spectrogram] enabled = no"
+    - "[unpack] enabled = no"
+
+- name: Copy the configuration for php-fpm
+  ansible.builtin.copy:
+    src: lighttpd/www.conf
+    dest: /etc/php-fpm.d/www.conf
+    backup: true
+  become: true
+
+- name: Template the configuration for lighttpd
+  ansible.builtin.template:
+    src: lighttpd/lighttpd.conf.j2
+    dest: /etc/lighttpd/lighttpd.conf
+    backup: true
+  become: true
+
+- name: Copy the configuration for lighttpd modules
+  ansible.builtin.copy:
+    src: lighttpd/modules.conf
+    dest: /etc/lighttpd/modules.conf
+    backup: true
+  become: true
+
+- name: Copy the configuration for auth module
+  ansible.builtin.template:
+    src: lighttpd/auth.conf.j2
+    dest: /etc/lighttpd/conf.d/auth.conf
+    backup: true
+  become: true
+
+- name: Copy the configuration for fastcgi module
+  ansible.builtin.copy:
+    src: lighttpd/fastcgi.conf
+    dest: /etc/lighttpd/conf.d/fastcgi.conf
+    backup: true
+  become: true
+
+- name: Add a user to a password file and ensure permissions are set
+  community.general.htpasswd:
+    path: /var/www/ruTorrent/.htpasswd
+    name: "{{ ansible_user }}"
+    password: "{{ htpasswd }}"
+    owner: root
+    group: lighttpd
+    mode: 0640
+  become: true

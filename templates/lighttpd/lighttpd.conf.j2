@@ -1,0 +1,36 @@
+var.log_root = "/var/log/lighttpd"
+var.server_root = "/var/www/ruTorrent"
+var.state_dir = "/run/lighttpd"
+var.home_dir = "/var/lib/lighttpd"
+var.conf_dir = "/etc/lighttpd"
+var.vhosts_dir = server_root + "/vhosts"
+var.cache_dir = "/var/cache/lighttpd"
+var.socket_dir = state_dir + "/sockets"
+include "modules.conf"
+server.port = {{ https_port }}
+server.username = "lighttpd"
+server.groupname = "lighttpd"
+server.document-root = server_root
+server.pid-file = state_dir + "/lighttpd.pid"
+server.errorlog = log_root + "/error.log"
+include "conf.d/access_log.conf"
+include "conf.d/debug.conf"
+server.event-handler = "linux-sysepoll"
+server.network-backend = "sendfile"
+server.stat-cache-engine = "simple"
+server.max-connections = 1024
+index-file.names += (
+  "index.xhtml", "index.html", "index.htm", "default.htm", "index.php"
+)
+url.access-deny = ( "~", ".inc" )
+$HTTP["url"] =~ "\.pdf$" {
+  server.range-requests = "disable"
+}
+static-file.exclude-extensions = ( ".php", ".pl", ".fcgi", ".scgi" )
+include "conf.d/mime.conf"
+include "conf.d/dirlisting.conf"
+server.follow-symlink = "enable"
+server.upload-dirs = ( "/var/tmp" )
+ssl.engine = "enable"
+ssl.privkey = "/etc/ssl/private/vsftpd.key"
+ssl.pemfile = "/etc/ssl/private/vsftpd.pem"

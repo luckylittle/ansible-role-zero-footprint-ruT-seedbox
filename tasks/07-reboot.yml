@@ -1,0 +1,18 @@
+---
+# tasks file for ansible-role-zero-footprint-ruT-seedbox
+- name: Enable required services
+  ansible.builtin.systemd:
+    state: stopped
+    enabled: true
+    daemon_reload: true
+    name: "{{ item }}"
+  become: true
+  loop:
+    - lighttpd
+    - php-fpm
+    - rtorrent
+    - vsftpd
+
+# - name: Reboot a slow machine that might have lots of updates to apply
+#   ansible.builtin.reboot:
+#     reboot_timeout: 1800

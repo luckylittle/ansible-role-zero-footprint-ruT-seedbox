@@ -1,0 +1,35 @@
+---
+# tasks file for ansible-role-zero-footprint-ruT-seedbox
+- name: Remove unnecessary packages
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: absent
+  become: true
+  loop:
+    - cockpit
+    - gcc
+    - gcc-c++
+    - libcurl-devel
+    - make
+    - ncurses-devel
+    - openssl-devel
+    - zlib-devel
+
+- name: Remove unnecessary files
+  ansible.builtin.file:
+    path: "/home/{{ ansible_user }}/{{ item }}"
+    state: absent
+  become: true
+  loop:
+    - "{{ xmlrpc_dl | urlsplit('path') | basename | regex_replace('.tgz') }}"
+    - "{{ libtorrent_dl | urlsplit('path') | basename | regex_replace('.tar.gz') }}"
+    - "{{ rtorrent_dl | urlsplit('path') | basename | regex_replace('.tar.gz') }}"
+
+- name: Disable some services
+  ansible.builtin.systemd:
+    enabled: false
+    state: stopped
+    name: "{{ item }}"
+  become: true
+  loop:
+    - rsyslog

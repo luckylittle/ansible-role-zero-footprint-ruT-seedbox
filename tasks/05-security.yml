@@ -1,0 +1,65 @@
+---
+# tasks file for ansible-role-zero-footprint-ruT-seedbox
+- name: Install packages
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: present
+  become: true
+  loop:
+    - fail2ban
+    - policycoreutils-devel
+
+- name: Ensure SELinux is set to enforcing mode
+  ansible.builtin.lineinfile:
+    path: /etc/selinux/config
+    regexp: '^SELINUX='
+    line: SELINUX=enforcing
+  become: true
+
+# - name: Set httpd_can_network_connect flag on and keep it persistent across reboots
+#   ansible.posix.seboolean:
+#     name: httpd_can_network_connect
+#     state: yes
+#     persistent: yes
+
+- name: Permit traffic in default zone for services
+  ansible.posix.firewalld:
+    service: "https"
+    permanent: true
+    immediate: true
+    state: enabled
+  become: true
+  notify:
+    - "Reload firewalld"
+
+- name: Permit traffic in default zone for ports
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: true
+    immediate: true
+    state: enabled
+  become: true
+  loop:
+    - "{{ rtorrent_port }}/tcp"
+    - "{{ rtorrent_port }}/udp"
+    - "55443/tcp"
+    - "{{ pasv_port_range }}/tcp"
+  notify:
+    - "Reload firewalld"
+
+- name: Deny traffic in default zone for cockpit
+  ansible.posix.firewalld:
+    service: "cockpit"
+    permanent: true
+    immediate: true
+    state: disabled
+  become: true
+  notify:
+    - "Reload firewalld"
+
+# - name: Insert/Update "Match User" configuration block in /etc/ssh/sshd_config
+#   ansible.builtin.blockinfile:
+#     path: /etc/ssh/sshd_config
+#     block: |
+#       Match User {{ ansible_user }}
+#       PasswordAuthentication yes
