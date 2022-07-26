@@ -13,6 +13,7 @@
     - make
     - ncurses-devel
     - openssl-devel
+    - policycoreutils-devel
     - zlib-devel
 
 - name: Remove unnecessary files
@@ -25,6 +26,24 @@
     - "{{ libtorrent_dl | urlsplit('path') | basename | regex_replace('.tar.gz') }}"
     - "{{ rtorrent_dl | urlsplit('path') | basename | regex_replace('.tar.gz') }}"
 
+- name: Remove unnecessary SELinux files
+  ansible.builtin.file:
+    path: "/tmp/{{ item }}"
+    state: absent
+  loop:
+    - rutorrent.fc
+    - rutorrent.if
+    - rutorrent.pp
+    - rutorrent.te
+    - tmux.fc
+    - tmux.if
+    - tmux.pp
+    - tmux.te
+
+- name: Compile the SELinux modules
+  ansible.builtin.command: "dnf clean all"
+  become: true
+
 - name: Disable some services
   ansible.builtin.systemd:
     enabled: false
@@ -33,3 +52,18 @@
   become: true
   loop:
     - rsyslog
+
+- name: Find /var/log all directories, exclude nginx and mysql
+  ansible.builtin.find:
+    paths: /var/log
+    recurse: yes
+    file_type: file
+  become: true
+  register: var_log_files
+
+- name: Empty all var_log_files
+  community.general.filesize:
+    path: "{{ item.path }}"
+    size: 0B
+  become: true
+  loop: "{{ var_log_files.files }}"

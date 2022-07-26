@@ -16,11 +16,31 @@
     line: SELINUX=enforcing
   become: true
 
-# - name: Set httpd_can_network_connect flag on and keep it persistent across reboots
-#   ansible.posix.seboolean:
-#     name: httpd_can_network_connect
-#     state: yes
-#     persistent: yes
+- name: Copy the SELinux modules
+  ansible.builtin.copy:
+    src: selinux/{{ item }}
+    dest: /tmp/{{ item }}
+    backup: true
+  loop:
+    - rutorrent.te
+    - tmux.te
+
+- name: Compile the SELinux modules
+  ansible.builtin.command: "make -f /usr/share/selinux/devel/Makefile {{ item | split(\".\") | first }}.pp"
+  args:
+    chdir: "/tmp"
+  loop:
+    - rutorrent.te
+    - tmux.te
+
+- name: Install the SELinux modules
+  ansible.builtin.command: "semodule -i {{ item }}"
+  args:
+    chdir: "/tmp"
+  become: true
+  loop:
+    - rutorrent.pp
+    - tmux.pp
 
 - name: Permit traffic in default zone for services
   ansible.posix.firewalld:
@@ -57,9 +77,53 @@
   notify:
     - "Reload firewalld"
 
-# - name: Insert/Update "Match User" configuration block in /etc/ssh/sshd_config
-#   ansible.builtin.blockinfile:
-#     path: /etc/ssh/sshd_config
-#     block: |
-#       Match User {{ ansible_user }}
-#       PasswordAuthentication yes
+- name: Template the configuration for SSHD
+  ansible.builtin.template:
+    src: sshd/sshd_config.j2
+    dest: /etc/ssh/sshd_config
+    backup: true
+  become: true
+
+- name: Copy the configuration for Fail2Ban
+  ansible.builtin.copy:
+    src: fail2ban/jail.local
+    dest: /etc/fail2ban/jail.local
+    backup: true
+  become: true
+
+- name: Copy the configuration for Fail2Ban
+  ansible.builtin.copy:
+    src: fail2ban/lighttpd.local
+    dest: /etc/fail2ban/jail.d/lighttpd.local
+    backup: true
+  become: true
+
+- name: Copy the configuration for Fail2Ban
+  ansible.builtin.copy:
+    src: fail2ban/sshd.local
+    dest: /etc/fail2ban/jail.d/sshd.local
+    backup: true
+  become: true
+
+- name: Copy the configuration for Fail2Ban
+  ansible.builtin.copy:
+    src: fail2ban/vsftpd.local
+    dest: /etc/fail2ban/jail.d/vsftpd.local
+    backup: true
+  become: true
+
+- name: Make exceptions for some IP addresses
+  ansible.builtin.lineinfile:
+    path: /etc/fail2ban/jail.conf
+    regexp: '^#ignoreip = 127.0.0.1/8 ::1$'
+    line: "ignoreip = 127.0.0.1/8 ::1 192.168.0.1/16 10.0.0.0/8 172.16.0.0/12 {{ fail2ban_ignore_ipv4 }}"
+    backup: true
+  become: true
+
+- name: Disable shell history
+  ansible.builtin.lineinfile:
+    path: /etc/profile
+    regexp: '^HISTSIZE=1000$'
+    line: "HISTSIZE=0\nHISTFILE=/dev/null"
+    backup: true
+  become: true

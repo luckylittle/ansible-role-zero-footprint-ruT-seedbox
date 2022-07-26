@@ -115,3 +115,13 @@
     group: lighttpd
     mode: 0640
   become: true
+
+- name: Validate the
+  ansible.builtin.command: "lighttpd -t -f {{ item }}"
+  args:
+    chdir: "/etc/lighttpd/"
+  loop:
+    - lighttpd.conf
+    - modules.conf
+    - conf.d/auth.conf
+    - conf.d/fastcgi.conf
