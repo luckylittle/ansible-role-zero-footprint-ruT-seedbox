@@ -78,4 +78,4 @@
   ansible.builtin.lineinfile:
     path: "~/.bashrc"
     line: "alias rt=\"tmux a\""
-    create: yes
+    create: true

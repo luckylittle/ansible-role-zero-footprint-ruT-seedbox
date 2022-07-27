@@ -60,7 +60,7 @@
   ansible.builtin.lineinfile:
     path: /var/www/ruTorrent/conf/plugins.ini
     line: "{{ item }}"
-    create: yes
+    create: true
   become: true
   loop:
     - "[_cloudflare] enabled = no"

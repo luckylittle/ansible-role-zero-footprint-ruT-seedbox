@@ -181,27 +181,27 @@
     line: "    daily"
   become: true
 
-# - name: Find /var/log all directories
-#   ansible.builtin.find:
-#     paths: /var/log
-#     recurse: yes
-#     file_type: file
-#   become: true
-#   register: var_log_files
+- name: Find /var/log all directories
+  ansible.builtin.find:
+    paths: /var/log
+    recurse: true
+    file_type: file
+  become: true
+  register: var_log_files
 
-# - name: Empty all var_log_files
-#   community.general.filesize:
-#     path: "{{ item.path }}"
-#     size: 0B
-#   become: true
-#   loop: "{{ var_log_files.files }}"
+- name: Empty all var_log_files
+  community.general.filesize:
+    path: "{{ item.path }}"
+    size: 0B
+  become: true
+  loop: "{{ var_log_files.files }}"
 
-# - name: Change attributes of some log files
-#   ansible.builtin.file:
-#     path: "/var/log/{{ item }}"
-#     attributes: '+i'
-#   become: true
-#   loop:
-#     - btmp
-#     - lastlog
-#     - wtmp
+- name: Change attributes of some log files
+  ansible.builtin.file:
+    path: "/var/log/{{ item }}"
+    attributes: '+i'
+  become: true
+  loop:
+    - btmp
+    - lastlog
+    - wtmp
