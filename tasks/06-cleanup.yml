@@ -43,14 +43,13 @@
     - tmux.pp
     - tmux.te
 
-- name: Compile the SELinux modules
+- name: Clean DNF cache
   ansible.builtin.command: "dnf clean all"
   become: true
 
 - name: Disable some services
   ansible.builtin.systemd:
     enabled: false
-    state: stopped
     name: "{{ item }}"
   become: true
   loop:
@@ -63,7 +62,7 @@
     section: rhsmcertd
     option: disable
     value: 1
-    beckup: true
+    backup: true
   become: true
 
 - name: Ensure rhsm logging is disabled
@@ -72,7 +71,13 @@
     section: logging
     option: default_log_level
     value: ERROR
-    backup: true
+  become: true
+
+- name: Disable DNF logging
+  ansible.builtin.lineinfile:
+    path: "/etc/dnf/dnf.conf"
+    line: "logfilelevel=0"
+    create: true
   become: true
 
 - name: Minimise general logrotate
