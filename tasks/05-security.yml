@@ -1,6 +1,6 @@
 ---
 # tasks file for ansible-role-zero-footprint-ruT-seedbox
-- name: Install packages
+- name: SECURITY | Install packages
   ansible.builtin.dnf:
     name: "{{ item }}"
     state: present
@@ -9,30 +9,47 @@
     - fail2ban
     - policycoreutils-devel
 
-- name: Ensure SELinux is set to enforcing mode
+- name: SECURITY | Ensure SELinux is set to enforcing mode
   ansible.builtin.lineinfile:
     path: /etc/selinux/config
     regexp: '^SELINUX='
     line: SELINUX=enforcing
   become: true
 
-# - name: Set httpd_can_network_connect flag on and keep it persistent across reboots
-#   ansible.posix.seboolean:
-#     name: httpd_can_network_connect
-#     state: yes
-#     persistent: yes
+- name: SECURITY | Copy the SELinux modules
+  ansible.builtin.copy:
+    src: selinux/{{ item }}
+    dest: /tmp/{{ item }}
+  loop:
+    - rutorrent.te
+    - tmux.te
 
-- name: Permit traffic in default zone for services
+- name: SECURITY | Compile the SELinux modules
+  ansible.builtin.command: "make -f /usr/share/selinux/devel/Makefile {{ item | split(\".\") | first }}.pp"
+  args:
+    chdir: "/tmp"
+  loop:
+    - rutorrent.te
+    - tmux.te
+
+- name: SECURITY | Install the SELinux modules
+  ansible.builtin.command: "semodule -i {{ item }}"
+  args:
+    chdir: "/tmp"
+  become: true
+  loop:
+    - rutorrent.pp
+    - tmux.pp
+
+- name: SECURITY | Permit traffic in default zone for HTTPS service
   ansible.posix.firewalld:
     service: "https"
     permanent: true
     immediate: true
     state: enabled
   become: true
-  notify:
-    - "Reload firewalld"
 
-- name: Permit traffic in default zone for ports
+- name: SECURITY | Permit traffic in default zone for various ports
   ansible.posix.firewalld:
     port: "{{ item }}"
     permanent: true
@@ -44,10 +61,8 @@
     - "{{ rtorrent_port }}/udp"
     - "55443/tcp"
     - "{{ pasv_port_range }}/tcp"
-  notify:
-    - "Reload firewalld"
 
-- name: Deny traffic in default zone for cockpit
+- name: SECURITY | Deny traffic in default zone for cockpit
   ansible.posix.firewalld:
     service: "cockpit"
     permanent: true
@@ -57,9 +72,53 @@
   notify:
     - "Reload firewalld"
 
-# - name: Insert/Update "Match User" configuration block in /etc/ssh/sshd_config
-#   ansible.builtin.blockinfile:
-#     path: /etc/ssh/sshd_config
-#     block: |
-#       Match User {{ ansible_user }}
-#       PasswordAuthentication yes
+- name: SECURITY | Template the configuration for SSHD
+  ansible.builtin.template:
+    src: sshd/sshd_config.j2
+    dest: /etc/ssh/sshd_config
+    backup: true
+  become: true
+
+- name: SECURITY | Copy the configuration for Fail2Ban (jail)
+  ansible.builtin.copy:
+    src: fail2ban/jail.local
+    dest: /etc/fail2ban/jail.local
+    backup: true
+  become: true
+
+- name: SECURITY | Copy the configuration for Fail2Ban (lighttpd)
+  ansible.builtin.copy:
+    src: fail2ban/lighttpd.local
+    dest: /etc/fail2ban/jail.d/lighttpd.local
+    backup: true
+  become: true
+
+- name: SECURITY | Copy the configuration for Fail2Ban (sshd)
+  ansible.builtin.copy:
+    src: fail2ban/sshd.local
+    dest: /etc/fail2ban/jail.d/sshd.local
+    backup: true
+  become: true
+
+- name: SECURITY | Copy the configuration for Fail2Ban (vsftpd)
+  ansible.builtin.copy:
+    src: fail2ban/vsftpd.local
+    dest: /etc/fail2ban/jail.d/vsftpd.local
+    backup: true
+  become: true
+
+- name: SECURITY | Make exceptions for some IP addresses for Fail2Ban
+  ansible.builtin.lineinfile:
+    path: /etc/fail2ban/jail.conf
+    regexp: '^#ignoreip = 127.0.0.1/8 ::1$'
+    line: "ignoreip = 127.0.0.1/8 ::1 192.168.0.1/16 10.0.0.0/8 172.16.0.0/12 {{ fail2ban_ignore_ipv4 }}"
+    backup: true
+  become: true
+
+- name: SECURITY | Disable shell history
+  ansible.builtin.lineinfile:
+    path: /etc/profile
+    regexp: '^HISTSIZE=1000$'
+    line: "HISTSIZE=0\nHISTFILE=/dev/null"
+    backup: true
+  become: true

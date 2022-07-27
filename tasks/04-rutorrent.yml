@@ -1,6 +1,6 @@
 ---
 # tasks file for ansible-role-zero-footprint-ruT-seedbox
-- name: Install packages
+- name: RUTORRENT | Install packages
   ansible.builtin.dnf:
     name: "{{ item }}"
     state: present
@@ -14,7 +14,7 @@
     - php-json
     - python3-passlib
 
-- name: Create a directory structure
+- name: RUTORRENT | Create a directory structure
   ansible.builtin.file:
     path: "/var/www/ruTorrent"
     state: directory
@@ -22,7 +22,7 @@
     group: lighttpd
   become: true
 
-- name: Unzip the rutorrent
+- name: RUTORRENT | Unzip the rutorrent
   ansible.builtin.unarchive:
     src: "{{ rutorrent_dl }}"
     dest: "/var/www/ruTorrent"
@@ -31,23 +31,23 @@
     remote_src: true
   become: true
 
-- name: Stat rutorrent
+- name: RUTORRENT | Stat rutorrent
   ansible.builtin.stat:
     path: "/var/www/ruTorrent/ruTorrent-{{ rutorrent_dl | urlsplit('path') | basename | regex_replace('^v') | regex_replace('.tar.gz') }}"
   register: rutorrent_stat
 
-- name: Move rutorrent
+- name: RUTORRENT | Move rutorrent
   ansible.builtin.shell: "mv -t /var/www/ruTorrent/ /var/www/ruTorrent/ruTorrent-{{ rutorrent_dl | urlsplit('path') | basename | regex_replace('^v') | regex_replace('.tar.gz') }}/*"
   become: true
   when: rutorrent_stat.stat.exists
 
-- name: Remove temporary directory
+- name: RUTORRENT | Remove temporary directory
   ansible.builtin.file:
     path: "/var/www/ruTorrent/ruTorrent-{{ rutorrent_dl | urlsplit('path') | basename | regex_replace('^v') | regex_replace('.tar.gz') }}"
     state: absent
   become: true
 
-- name: Template the configuration for rutorrent
+- name: RUTORRENT | Template the configuration for rutorrent
   ansible.builtin.template:
     src: rtorrent/config.php.j2
     dest: /var/www/ruTorrent/conf/config.php
@@ -56,11 +56,12 @@
     backup: true
   become: true
 
-- name: Disable unnecessary rutorrent plugins
+- name: RUTORRENT | Disable unnecessary rutorrent plugins
   ansible.builtin.lineinfile:
     path: /var/www/ruTorrent/conf/plugins.ini
     line: "{{ item }}"
-    create: yes
+    create: true
+    backup: true
   become: true
   loop:
     - "[_cloudflare] enabled = no"
@@ -71,42 +72,42 @@
     - "[spectrogram] enabled = no"
     - "[unpack] enabled = no"
 
-- name: Copy the configuration for php-fpm
+- name: RUTORRENT | Copy the configuration for php-fpm
   ansible.builtin.copy:
     src: lighttpd/www.conf
     dest: /etc/php-fpm.d/www.conf
     backup: true
   become: true
 
-- name: Template the configuration for lighttpd
+- name: RUTORRENT | Template the configuration for lighttpd
   ansible.builtin.template:
     src: lighttpd/lighttpd.conf.j2
     dest: /etc/lighttpd/lighttpd.conf
     backup: true
   become: true
 
-- name: Copy the configuration for lighttpd modules
+- name: RUTORRENT | Copy the configuration for lighttpd modules
   ansible.builtin.copy:
     src: lighttpd/modules.conf
     dest: /etc/lighttpd/modules.conf
     backup: true
   become: true
 
-- name: Copy the configuration for auth module
+- name: RUTORRENT | Copy the configuration for auth module
   ansible.builtin.template:
     src: lighttpd/auth.conf.j2
     dest: /etc/lighttpd/conf.d/auth.conf
     backup: true
   become: true
 
-- name: Copy the configuration for fastcgi module
+- name: RUTORRENT | Copy the configuration for fastcgi module
   ansible.builtin.copy:
     src: lighttpd/fastcgi.conf
     dest: /etc/lighttpd/conf.d/fastcgi.conf
     backup: true
   become: true
 
-- name: Add a user to a password file and ensure permissions are set
+- name: RUTORRENT | Add a user to a htpasswd file and ensure permissions are set
   community.general.htpasswd:
     path: /var/www/ruTorrent/.htpasswd
     name: "{{ ansible_user }}"
@@ -115,3 +116,15 @@
     group: lighttpd
     mode: 0640
   become: true
+
+- name: RUTORRENT | Validate the lighttpd config files
+  ansible.builtin.command: "lighttpd -t -f {{ item }}"
+  args:
+    chdir: "/etc/lighttpd/"
+  loop:
+    - lighttpd.conf
+    - modules.conf
+    - conf.d/auth.conf
+    - conf.d/fastcgi.conf
+  register: command_result
+  failed_when: command_result.rc != 0

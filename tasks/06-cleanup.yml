@@ -1,6 +1,6 @@
 ---
 # tasks file for ansible-role-zero-footprint-ruT-seedbox
-- name: Remove unnecessary packages
+- name: CLEANUP | Remove unnecessary packages
   ansible.builtin.dnf:
     name: "{{ item }}"
     state: absent
@@ -9,13 +9,17 @@
     - cockpit
     - gcc
     - gcc-c++
+    - insights-client
     - libcurl-devel
     - make
     - ncurses-devel
     - openssl-devel
+    - policycoreutils-devel
+    - python3-cryptography
+    - python3-passlib
     - zlib-devel
 
-- name: Remove unnecessary files
+- name: CLEANUP | Remove unnecessary source files
   ansible.builtin.file:
     path: "/home/{{ ansible_user }}/{{ item }}"
     state: absent
@@ -25,11 +29,185 @@
     - "{{ libtorrent_dl | urlsplit('path') | basename | regex_replace('.tar.gz') }}"
     - "{{ rtorrent_dl | urlsplit('path') | basename | regex_replace('.tar.gz') }}"
 
-- name: Disable some services
+- name: CLEANUP | Remove unnecessary SELinux files
+  ansible.builtin.file:
+    path: "/tmp/{{ item }}"
+    state: absent
+  loop:
+    - rutorrent.fc
+    - rutorrent.if
+    - rutorrent.pp
+    - rutorrent.te
+    - tmux.fc
+    - tmux.if
+    - tmux.pp
+    - tmux.te
+
+- name: CLEANUP | Clean DNF cache
+  ansible.builtin.command: "dnf clean all"
+  become: true
+
+- name: CLEANUP | Disable rsyslog & auditd services
   ansible.builtin.systemd:
     enabled: false
-    state: stopped
     name: "{{ item }}"
   become: true
   loop:
     - rsyslog
+    - auditd
+
+- name: CLEANUP | Ensure rhsm logging is disabled
+  community.general.ini_file:
+    path: /etc/rhsm/rhsm.conf
+    section: rhsmcertd
+    option: disable
+    value: 1
+    backup: true
+  become: true
+
+- name: CLEANUP | Ensure rhsm logging is only ERROR
+  community.general.ini_file:
+    path: /etc/rhsm/rhsm.conf
+    section: logging
+    option: default_log_level
+    value: ERROR
+  become: true
+
+- name: CLEANUP | Disable DNF logging
+  ansible.builtin.lineinfile:
+    path: "/etc/dnf/dnf.conf"
+    line: "logfilelevel=0"
+    create: true
+    backup: true
+  become: true
+
+- name: CLEANUP | Minimise general logrotate to daily
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.conf
+    regexp: '^weekly$'
+    line: "daily"
+    backup: true
+  become: true
+
+- name: CLEANUP | Minimise general logrotate to 1
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.conf
+    regexp: '^rotate 4$'
+    line: "rotate 1"
+  become: true
+
+- name: CLEANUP | Minimise bootlog logrotate to 1
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/bootlog
+    regexp: '^    rotate 7$'
+    line: "    rotate 1"
+  become: true
+
+- name: CLEANUP | Minimise btmp logrotate to daily
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/btmp
+    regexp: '^    monthly$'
+    line: "    daily"
+  become: true
+
+- name: CLEANUP | Minimise dnf logrotate to daily
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/dnf
+    regexp: '^    weekly$'
+    line: "    daily"
+  become: true
+
+- name: CLEANUP | Minimise dnf logrotate to 1
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/dnf
+    regexp: '^    rotate 4$'
+    line: "    rotate 1"
+  become: true
+
+- name: CLEANUP | Minimise firewalld logrotate to daily
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/firewalld
+    regexp: '^    weekly$'
+    line: "    daily"
+  become: true
+
+- name: CLEANUP | Minimise firewalld logrotate to 1
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/firewalld
+    regexp: '^    rotate 4$'
+    line: "    rotate 1"
+  become: true
+
+- name: CLEANUP | Minimise iscsiuiolog logrotate to daily
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/iscsiuiolog
+    regexp: '^    weekly$'
+    line: "    daily"
+  become: true
+
+- name: CLEANUP | Minimise iscsiuiolog logrotate to 1
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/iscsiuiolog
+    regexp: '^    rotate 4$'
+    line: "    rotate 1"
+  become: true
+
+- name: CLEANUP | Minimise psacct logrotate to 1
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/psacct
+    regexp: '^    rotate 31$'
+    line: "    rotate 1"
+  become: true
+
+- name: CLEANUP | Minimise samba logrotate to 1
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/samba
+    regexp: '^    rotate 99$'
+    line: "    rotate 1"
+  become: true
+
+- name: CLEANUP | Minimise sssd logrotate to daily
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/sssd
+    regexp: '^    weekly$'
+    line: "    daily"
+  become: true
+
+- name: CLEANUP | Minimise sssd logrotate to 1
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/sssd
+    regexp: '^    rotate 2$'
+    line: "    rotate 1"
+  become: true
+
+- name: CLEANUP | Minimise wtmp logrotate to daily
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/wtmp
+    regexp: '^    monthly$'
+    line: "    daily"
+  become: true
+
+- name: CLEANUP | Find all logs in /var/log
+  ansible.builtin.find:
+    paths: /var/log
+    recurse: true
+    file_type: file
+  become: true
+  register: var_log_files
+
+- name: CLEANUP | Empty all var_log_files
+  community.general.filesize:
+    path: "{{ item.path }}"
+    size: 0B
+  become: true
+  loop: "{{ var_log_files.files }}"
+
+- name: CLEANUP | Change attributes of btmp, lastlog, wtmp logs
+  ansible.builtin.file:
+    path: "/var/log/{{ item }}"
+    attributes: '+i'
+  become: true
+  loop:
+    - btmp
+    - lastlog
+    - wtmp

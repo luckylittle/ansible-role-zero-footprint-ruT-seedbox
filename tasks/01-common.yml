@@ -1,11 +1,11 @@
 ---
 # tasks file for ansible-role-zero-footprint-ruT-seedbox
-- name: Set timezone
+- name: COMMON | Set timezone
   community.general.timezone:
     name: "{{ set_timezone }}"
   become: true
 
-- name: Add two IPv4 DNS server addresses
+- name: COMMON | Add two IPv4 Google DNS servers
   community.general.nmcli:
     conn_name: "{{ ansible_default_ipv4.alias }}"
     type: ethernet
@@ -16,7 +16,7 @@
   become: true
   when: set_google_dns
 
-- name: Create a directory structure
+- name: COMMON | Create a directory structure
   ansible.builtin.file:
     path: "/home/{{ ansible_user }}/{{ item }}"
     state: directory
@@ -43,12 +43,12 @@
     - site/XXX
     - site/UPLOAD
 
-- name: Change home folder permissions
+- name: COMMON | Change home folder permissions
   ansible.builtin.file:
     path: /home/{{ ansible_user }}
     mode: 0711
 
-- name: Remove unnecessary motd
+- name: COMMON | Remove unnecessary messages of the day
   ansible.builtin.file:
     path: "/etc/motd.d/{{ item }}"
     state: absent
@@ -57,25 +57,25 @@
     - "cockpit"
     - "insights-client"
 
-- name: Add cleanup cron
+- name: COMMON | Add cleanup cron for Torrent files
   ansible.builtin.cron:
     name: "Remove *.torrent files older than 120 days every 1st day of the month (at 12:00AM)"
     day: "1"
     minute: "0"
     hour: "0"
     job: "find /home/{{ ansible_user }}/site/.Watch*/*.torrent -type f -ctime +120 -delete"
+    backup: true
 
-- name: Add cleanup cron
+- name: COMMON | Add cleanup cron for the Torrent data
   ansible.builtin.cron:
     name: "Remove site sub-folders older than 120 days every 1st day of the month (at 12:02AM)"
     day: "1"
     minute: "2"
     hour: "0"
     job: "find /home/{{ ansible_user }}/site/ -maxdepth 2 -mindepth 2 -type d -ctime +120 -exec rm -rf \"{}\" +"
-    backup: true
 
-- name: Add useful alias
+- name: COMMON | Add useful alias rt
   ansible.builtin.lineinfile:
     path: "~/.bashrc"
     line: "alias rt=\"tmux a\""
-    create: yes
+    create: true

@@ -1,6 +1,6 @@
 ---
 # tasks file for ansible-role-zero-footprint-ruT-seedbox
-- name: Enable required services
+- name: REBOOT | Enable required services
   ansible.builtin.systemd:
     state: stopped
     enabled: true
@@ -8,11 +8,20 @@
     name: "{{ item }}"
   become: true
   loop:
+    - fail2ban
     - lighttpd
     - php-fpm
     - rtorrent
     - vsftpd
 
-# - name: Reboot a slow machine that might have lots of updates to apply
-#   ansible.builtin.reboot:
-#     reboot_timeout: 1800
+- name: REBOOT | Reboot a machine
+  ansible.builtin.reboot:
+    reboot_timeout: 1200
+  become: true
+  when: require_reboot
+
+- name: REBOOT | Empty audit.log after the reboot (cannot be done before that)
+  community.general.filesize:
+    path: "/var/log/audit/audit.log"
+    size: 0B
+  become: true

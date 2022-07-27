@@ -1,75 +1,75 @@
 ---
 # tasks file for ansible-role-zero-footprint-ruT-seedbox
-# - name: Install packages
-#   ansible.builtin.dnf:
-#     name: "{{ item }}"
-#     state: present
-#   become: true
-#   loop:
-#     - python3-cryptography
-#     - vsftpd
+- name: VSFTPD | Install packages
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: present
+  become: true
+  loop:
+    - python3-cryptography
+    - vsftpd
 
-# - name: Create a directory structure for SSL
-#   ansible.builtin.file:
-#     path: "/etc/ssl/private"
-#     state: directory
-#   become: true
+- name: VSFTPD | Create a directory structure for SSL certificates
+  ansible.builtin.file:
+    path: "/etc/ssl/private"
+    state: directory
+  become: true
 
-# - name: Determine public IP address
-#   ansible.builtin.command: curl -4 http://icanhazip.com
-#   register: public_ip
+- name: VSFTPD | Determine public IPv4 address
+  ansible.builtin.command: curl -4 http://icanhazip.com
+  register: public_ip
 
-# - name: Store public IP address
-#   ansible.builtin.set_fact:
-#     ansible_public_ipv4: "{{ public_ip.stdout }}"
-#     cacheable: true
+- name: VSFTPD | Store public IPv4 address as a fact
+  ansible.builtin.set_fact:
+    ansible_public_ipv4: "{{ public_ip.stdout }}"
+    cacheable: true
 
-# - name: Create private key (RSA, 4096 bits)
-#   community.crypto.openssl_privatekey:
-#     path: /etc/ssl/private/vsftpd.key
-#   become: true
+- name: VSFTPD | Create private key (RSA, 4096 bits)
+  community.crypto.openssl_privatekey:
+    path: /etc/ssl/private/vsftpd.key
+  become: true
 
-# - name: Generate an OpenSSL Certificate Signing Request with Subject information
-#   community.crypto.openssl_csr:
-#     path: /etc/ssl/private/vsftpd.csr
-#     privatekey_path: /etc/ssl/private/vsftpd.key
-#     country_name: US
-#     organization_name: RH
-#     organizational_unit_name: RH
-#     email_address: none@none.none
-#     common_name: "{{ ansible_public_ipv4 }}"
-#     backup: true
-#   become: true
+- name: VSFTPD | Generate an OpenSSL Certificate Signing Request with Subject information
+  community.crypto.openssl_csr:
+    path: /etc/ssl/private/vsftpd.csr
+    privatekey_path: /etc/ssl/private/vsftpd.key
+    country_name: US
+    organization_name: RH
+    organizational_unit_name: RH
+    email_address: none@none.none
+    common_name: "{{ ansible_public_ipv4 }}"
+    backup: true
+  become: true
 
-# - name: Generate a Self Signed OpenSSL certificate
-#   community.crypto.x509_certificate:
-#     path: /etc/ssl/private/vsftpd.pem
-#     privatekey_path: /etc/ssl/private/vsftpd.key
-#     csr_path: /etc/ssl/private/vsftpd.csr
-#     provider: selfsigned
-#     backup: true
-#   become: true
+- name: VSFTPD | Generate a Self Signed OpenSSL certificate
+  community.crypto.x509_certificate:
+    path: /etc/ssl/private/vsftpd.pem
+    privatekey_path: /etc/ssl/private/vsftpd.key
+    csr_path: /etc/ssl/private/vsftpd.csr
+    provider: selfsigned
+    backup: true
+  become: true
 
-# - name: Template the configuration for vsftpd
-#   ansible.builtin.template:
-#     src: vsftpd/vsftpd.conf.j2
-#     dest: /etc/vsftpd/vsftpd.conf
-#     backup: true
-#   become: true
+- name: VSFTPD | Template the configuration for vsftpd
+  ansible.builtin.template:
+    src: vsftpd/vsftpd.conf.j2
+    dest: /etc/vsftpd/vsftpd.conf
+    backup: true
+  become: true
 
-- name: Configure vsftpd for multiple users (in users.txt)
+- name: VSFTPD | Configure vsftpd for multiple users (in users.txt)
   block:
-    - name: Copy the users.txt
+    - name: VSFTPD | Copy the users.txt
       ansible.builtin.copy:
         src: vsftpd/users.txt
         dest: "~"
 
-    - name: Get only the users from users.txt
-      ansible.builtin.command: "awk '{if(NR%2!=0)print}' ~/users.txt"
+    - name: VSFTPD | Get only the users from users.txt, except for ansible_user
+      ansible.builtin.shell: "awk '{if(NR%2!=0)print}' ~/users.txt | grep -v {{ ansible_user }}"
       become: true
       register: vsftpd_additional_users
 
-    - name: Add users
+    - name: VSFTPD | Add users from users.txt without ability to SSH
       ansible.builtin.user:
         name: "{{ item }}"
         home: "/home/{{ ansible_user }}"
@@ -79,18 +79,27 @@
       become: true
       loop: "{{ vsftpd_additional_users.stdout | split('\n') }}"
 
-    - name: Generate login database
+    - name: VSFTPD | Generate login database
       ansible.builtin.command: db_load -T -t hash -f ~/users.txt /etc/vsftpd/login.db
 
-    - name: Remove unnecessary file
+    - name: VSFTPD | Remove unnecessary file
       ansible.builtin.file:
         path: "~/users.txt"
         state: absent
 
-    - name: Copy the configuration for PAM
+    - name: VSFTPD | Copy the vsftpd configuration for PAM
       ansible.builtin.copy:
         src: pam/vsftpd
         dest: /etc/pam.d/vsftpd
         backup: true
   become: true
   when: not single_user
+
+- name: VSFTPD | Create an empty vsftpd.log
+  ansible.builtin.copy:
+    content: ""
+    dest: "/var/log/vsftpd.log"
+    owner: root
+    group: root
+    mode: '0600'
+  become: true
