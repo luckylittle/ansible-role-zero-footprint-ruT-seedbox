@@ -78,9 +78,9 @@
 
 - name: Template the configuration for rtorrent
   ansible.builtin.template:
-    backup: true
     src: rtorrent/rtorrent.rc.j2
     dest: ~/.rtorrent.rc
+    backup: true
 
 - name: Template a service file
   ansible.builtin.template:

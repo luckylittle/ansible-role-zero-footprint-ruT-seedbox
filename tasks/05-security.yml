@@ -20,7 +20,6 @@
   ansible.builtin.copy:
     src: selinux/{{ item }}
     dest: /tmp/{{ item }}
-    backup: true
   loop:
     - rutorrent.te
     - tmux.te
@@ -49,8 +48,6 @@
     immediate: true
     state: enabled
   become: true
-  notify:
-    - "Reload firewalld"
 
 - name: Permit traffic in default zone for ports
   ansible.posix.firewalld:
@@ -64,8 +61,6 @@
     - "{{ rtorrent_port }}/udp"
     - "55443/tcp"
     - "{{ pasv_port_range }}/tcp"
-  notify:
-    - "Reload firewalld"
 
 - name: Deny traffic in default zone for cockpit
   ansible.posix.firewalld:

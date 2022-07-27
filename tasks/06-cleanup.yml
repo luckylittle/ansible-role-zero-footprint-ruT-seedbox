@@ -78,6 +78,7 @@
     path: "/etc/dnf/dnf.conf"
     line: "logfilelevel=0"
     create: true
+    backup: true
   become: true
 
 - name: Minimise general logrotate

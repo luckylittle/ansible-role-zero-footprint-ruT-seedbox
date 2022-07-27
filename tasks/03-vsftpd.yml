@@ -64,8 +64,8 @@
         src: vsftpd/users.txt
         dest: "~"
 
-    - name: Get only the users from users.txt
-      ansible.builtin.command: "awk '{if(NR%2!=0)print}' ~/users.txt"
+    - name: Get only the users from users.txt except for ansible_user
+      ansible.builtin.shell: "awk '{if(NR%2!=0)print}' ~/users.txt | grep -v {{ ansible_user }}"
       become: true
       register: vsftpd_additional_users
 
@@ -94,3 +94,12 @@
         backup: true
   become: true
   when: not single_user
+
+- name: Create empty vsftpd.log
+  ansible.builtin.copy:
+    content: ""
+    dest: "/var/log/vsftpd.log"
+    owner: root
+    group: root
+    mode: '0600'
+  become: true

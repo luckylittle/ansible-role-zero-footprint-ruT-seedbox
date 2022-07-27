@@ -64,6 +64,7 @@
     minute: "0"
     hour: "0"
     job: "find /home/{{ ansible_user }}/site/.Watch*/*.torrent -type f -ctime +120 -delete"
+    backup: true
 
 - name: Add cleanup cron
   ansible.builtin.cron:
@@ -72,9 +73,8 @@
     minute: "2"
     hour: "0"
     job: "find /home/{{ ansible_user }}/site/ -maxdepth 2 -mindepth 2 -type d -ctime +120 -exec rm -rf \"{}\" +"
-    backup: true
 
-- name: Add useful alias
+- name: Add useful alias rt
   ansible.builtin.lineinfile:
     path: "~/.bashrc"
     line: "alias rt=\"tmux a\""
