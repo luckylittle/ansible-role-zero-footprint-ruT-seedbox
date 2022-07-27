@@ -9,7 +9,7 @@ require {
   class sock_file write;
   class unix_stream_socket connectto;
   class tcp_socket name_connect;
-  class dir { read write add_name remove_name setattr };
+  class dir { read write add_name remove_name setattr create };
   class file { append create setattr unlink rename write };
 }
 
@@ -18,5 +18,5 @@ allow httpd_t http_port_t:tcp_socket name_connect;
 allow httpd_t user_home_t:sock_file write;
 allow httpd_t initrc_t:unix_stream_socket connectto;
 allow httpd_t user_home_t:dir read;
-allow httpd_t httpd_sys_content_t:dir { add_name remove_name setattr write };
+allow httpd_t httpd_sys_content_t:dir { add_name remove_name setattr write create };
 allow httpd_t httpd_sys_content_t:file { append create setattr unlink rename write };

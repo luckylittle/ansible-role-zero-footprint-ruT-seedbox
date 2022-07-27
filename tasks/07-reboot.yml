@@ -8,6 +8,7 @@
     name: "{{ item }}"
   become: true
   loop:
+    - fail2ban
     - lighttpd
     - php-fpm
     - rtorrent
@@ -17,3 +18,4 @@
   ansible.builtin.reboot:
     reboot_timeout: 1200
   become: true
+  when: require_reboot

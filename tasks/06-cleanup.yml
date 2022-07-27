@@ -9,11 +9,14 @@
     - cockpit
     - gcc
     - gcc-c++
+    - insights-client
     - libcurl-devel
     - make
     - ncurses-devel
     - openssl-devel
     - policycoreutils-devel
+    - python3-cryptography
+    - python3-passlib
     - zlib-devel
 
 - name: Remove unnecessary files
@@ -52,18 +55,153 @@
   become: true
   loop:
     - rsyslog
+    - auditd
 
-- name: Find /var/log all directories, exclude nginx and mysql
-  ansible.builtin.find:
-    paths: /var/log
-    recurse: yes
-    file_type: file
+- name: Ensure rhsm logging is disabled
+  community.general.ini_file:
+    path: /etc/rhsm/rhsm.conf
+    section: rhsmcertd
+    option: disable
+    value: 1
+    beckup: true
   become: true
-  register: var_log_files
 
-- name: Empty all var_log_files
-  community.general.filesize:
-    path: "{{ item.path }}"
-    size: 0B
+- name: Ensure rhsm logging is disabled
+  community.general.ini_file:
+    path: /etc/rhsm/rhsm.conf
+    section: logging
+    option: default_log_level
+    value: ERROR
+    backup: true
   become: true
-  loop: "{{ var_log_files.files }}"
+
+- name: Minimise general logrotate
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.conf
+    regexp: '^weekly$'
+    line: "daily"
+    backup: true
+  become: true
+
+- name: Minimise general logrotate
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.conf
+    regexp: '^rotate 4$'
+    line: "rotate 1"
+  become: true
+
+- name: Minimise bootlog logrotate
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/bootlog
+    regexp: '^    rotate 7$'
+    line: "    rotate 1"
+  become: true
+
+- name: Minimise btmp logrotate
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/btmp
+    regexp: '^    monthly$'
+    line: "    daily"
+  become: true
+
+- name: Minimise dnf logrotate
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/dnf
+    regexp: '^    weekly$'
+    line: "    daily"
+  become: true
+
+- name: Minimise dnf logrotate
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/dnf
+    regexp: '^    rotate 4$'
+    line: "    rotate 1"
+  become: true
+
+- name: Minimise firewalld logrotate
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/firewalld
+    regexp: '^    weekly$'
+    line: "    daily"
+  become: true
+
+- name: Minimise firewalld logrotate
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/firewalld
+    regexp: '^    rotate 4$'
+    line: "    rotate 1"
+  become: true
+
+- name: Minimise iscsiuiolog logrotate
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/iscsiuiolog
+    regexp: '^    weekly$'
+    line: "    daily"
+  become: true
+
+- name: Minimise iscsiuiolog logrotate
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/iscsiuiolog
+    regexp: '^    rotate 4$'
+    line: "    rotate 1"
+  become: true
+
+- name: Minimise psacct logrotate
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/psacct
+    regexp: '^    rotate 31$'
+    line: "    rotate 1"
+  become: true
+
+- name: Minimise samba logrotate
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/samba
+    regexp: '^    rotate 99$'
+    line: "    rotate 1"
+  become: true
+
+- name: Minimise sssd logrotate
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/sssd
+    regexp: '^    weekly$'
+    line: "    daily"
+  become: true
+
+- name: Minimise sssd logrotate
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/sssd
+    regexp: '^    rotate 2$'
+    line: "    rotate 1"
+  become: true
+
+- name: Minimise wtmp logrotate
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/wtmp
+    regexp: '^    monthly$'
+    line: "    daily"
+  become: true
+
+# - name: Find /var/log all directories
+#   ansible.builtin.find:
+#     paths: /var/log
+#     recurse: yes
+#     file_type: file
+#   become: true
+#   register: var_log_files
+
+# - name: Empty all var_log_files
+#   community.general.filesize:
+#     path: "{{ item.path }}"
+#     size: 0B
+#   become: true
+#   loop: "{{ var_log_files.files }}"
+
+# - name: Change attributes of some log files
+#   ansible.builtin.file:
+#     path: "/var/log/{{ item }}"
+#     attributes: '+i'
+#   become: true
+#   loop:
+#     - btmp
+#     - lastlog
+#     - wtmp

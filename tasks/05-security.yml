@@ -42,7 +42,7 @@
     - rutorrent.pp
     - tmux.pp
 
-- name: Permit traffic in default zone for services
+- name: Permit traffic in default zone for HTTPS service
   ansible.posix.firewalld:
     service: "https"
     permanent: true

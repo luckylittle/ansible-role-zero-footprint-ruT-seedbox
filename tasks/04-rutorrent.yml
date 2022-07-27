@@ -116,7 +116,7 @@
     mode: 0640
   become: true
 
-- name: Validate the
+- name: Validate the lighttpd config files
   ansible.builtin.command: "lighttpd -t -f {{ item }}"
   args:
     chdir: "/etc/lighttpd/"
@@ -125,3 +125,5 @@
     - modules.conf
     - conf.d/auth.conf
     - conf.d/fastcgi.conf
+  register: command_result
+  failed_when: command_result.rc != 0
