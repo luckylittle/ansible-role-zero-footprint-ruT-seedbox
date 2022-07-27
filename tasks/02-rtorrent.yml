@@ -1,6 +1,6 @@
 ---
 # tasks file for ansible-role-zero-footprint-ruT-seedbox
-- name: Install packages
+- name: RTORRENT | Install packages
   ansible.builtin.dnf:
     name: "{{ item }}"
     state: present
@@ -18,7 +18,7 @@
     - wget
     - zlib-devel
 
-- name: Unzip the libtorrent & rtorrent
+- name: RTORRENT | Unzip the xmlrpc, libtorrent & rtorrent
   ansible.builtin.unarchive:
     src: "{{ item }}"
     dest: "~"
@@ -28,61 +28,61 @@
     - "{{ libtorrent_dl }}"
     - "{{ rtorrent_dl }}"
 
-- name: Compile xmlrpc - configure
+- name: RTORRENT | Compile xmlrpc - configure
   ansible.builtin.command: "./configure"
   args:
     chdir: "~/{{ xmlrpc_dl | urlsplit('path') | basename | regex_replace('.tgz') }}"
 
-- name: Compile xmlrpc - make
+- name: RTORRENT | Compile xmlrpc - make
   ansible.builtin.command: "make"
   args:
     chdir: "~/{{ xmlrpc_dl | urlsplit('path') | basename | regex_replace('.tgz') }}"
 
-- name: Compile xmlrpc - make install
+- name: RTORRENT | Compile xmlrpc - make install
   ansible.builtin.command: "make install"
   args:
     chdir: "/home/{{ ansible_user }}/{{ xmlrpc_dl | urlsplit('path') | basename | regex_replace('.tgz') }}"
   become: true
 
-- name: Compile libtorrent - configure
+- name: RTORRENT | Compile libtorrent - configure
   ansible.builtin.command: "./configure"
   args:
     chdir: "~/{{ libtorrent_dl | urlsplit('path') | basename | regex_replace('.tar.gz') }}"
 
-- name: Compile libtorrent - make
+- name: RTORRENT | Compile libtorrent - make
   ansible.builtin.command: "make"
   args:
     chdir: "~/{{ libtorrent_dl | urlsplit('path') | basename | regex_replace('.tar.gz') }}"
 
-- name: Compile libtorrent - make install
+- name: RTORRENT | Compile libtorrent - make install
   ansible.builtin.command: "make install"
   args:
     chdir: "/home/{{ ansible_user }}/{{ libtorrent_dl | urlsplit('path') | basename | regex_replace('.tar.gz') }}"
   become: true
 
-- name: Compile rtorrent - configure
+- name: RTORRENT | Compile rtorrent - configure
   ansible.builtin.shell: "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig ./configure --with-xmlrpc-c=/usr/local/bin/xmlrpc-c-config"
   args:
     chdir: "~/{{ rtorrent_dl | urlsplit('path') | basename | regex_replace('.tar.gz') }}"
 
-- name: Compile rtorrent - make
+- name: RTORRENT | Compile rtorrent - make
   ansible.builtin.command: "make"
   args:
     chdir: "~/{{ rtorrent_dl | urlsplit('path') | basename | regex_replace('.tar.gz') }}"
 
-- name: Compile rtorrent - make install
+- name: RTORRENT | Compile rtorrent - make install
   ansible.builtin.command: "make install"
   args:
     chdir: "/home/{{ ansible_user }}/{{ rtorrent_dl | urlsplit('path') | basename | regex_replace('.tar.gz') }}"
   become: true
 
-- name: Template the configuration for rtorrent
+- name: RTORRENT | Template the configuration for rtorrent
   ansible.builtin.template:
     src: rtorrent/rtorrent.rc.j2
     dest: ~/.rtorrent.rc
     backup: true
 
-- name: Template a service file
+- name: RTORRENT | Template a service file for rtorrent
   ansible.builtin.template:
     backup: true
     src: rtorrent/rtorrent.service.j2
