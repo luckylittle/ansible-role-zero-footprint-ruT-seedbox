@@ -10,8 +10,11 @@
     - lighttpd
     - lighttpd-fastcgi
     - php
+    - php-dom
     - php-fpm
     - php-json
+    - php-mbstring
+    - php-libxml
     - python3-passlib
 
 - name: RUTORRENT | Create a directory structure
