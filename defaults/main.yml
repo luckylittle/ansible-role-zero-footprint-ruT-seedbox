@@ -11,6 +11,7 @@ xmlrpc_dl: "https://ixpeering.dl.sourceforge.net/project/xmlrpc-c/Xmlrpc-c%20Sup
 libtorrent_dl: "https://github.com/rakshasa/rtorrent/releases/download/v0.9.8/libtorrent-0.13.8.tar.gz"
 rtorrent_dl: "https://github.com/rakshasa/rtorrent/releases/download/v0.9.8/rtorrent-0.9.8.tar.gz"
 rtorrent_port: 55442
+rt_memory_max_set: "{{ ((ansible_memtotal_mb * 3) / 4) | round | int }}M"
 
 # 03-vsftpd
 ftp_port: 55443
