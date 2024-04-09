@@ -54,8 +54,7 @@ network.max_open_sockets.set = 999
 
 ## Memory resource usage (increase if you have a large number of items loaded,
 ## and/or the available resources to spend)
-## Targeting 16GB systems here !!!
-pieces.memory.max.set = 12000M
+pieces.memory.max.set = {{ rt_memory_max_set }}
 network.xmlrpc.size_limit.set = 2M
 # Preloading a piece of a file. Default: `0` Possible values: `0` (Off) , `1` (Madvise) , `2` (Direct paging).
 pieces.preload.type.set = 2

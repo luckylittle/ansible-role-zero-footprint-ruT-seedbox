@@ -20,6 +20,7 @@ Role Variables
 * `libtorrent_dl` - URL of the libtorrent
 * `rtorrent_dl` - URL of the rtorrent
 * `rtorrent_port` - what port should rtorrent listen on
+* `rt_memory_max_set` - how much memory should rTorrent use by default. It is using 75% of your total memory by default.
 * `ftp_port` - what port should vsftpd listen on
 * `pasv_port_range` - what port range should be used for FTP PASV
 * `single_user` - when `true` only one FTP user will be used and it is the same username who runs this playbook. When `false`, [this](files/vsftpd/users.txt) file is used
