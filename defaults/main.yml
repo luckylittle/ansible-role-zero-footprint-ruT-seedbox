@@ -8,8 +8,8 @@ set_google_dns: true
 # 02-rtorrent
 epel_dl: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm"
 xmlrpc_dl: "https://ixpeering.dl.sourceforge.net/project/xmlrpc-c/Xmlrpc-c%20Super%20Stable/1.54.05/xmlrpc-c-1.54.05.tgz"
-libtorrent_dl: "https://github.com/rakshasa/rtorrent/releases/download/v0.9.8/libtorrent-0.13.8.tar.gz"
-rtorrent_dl: "https://github.com/rakshasa/rtorrent/releases/download/v0.9.8/rtorrent-0.9.8.tar.gz"
+libtorrent_dl: "https://github.com/rakshasa/rtorrent/releases/download/v0.15.0/libtorrent-0.15.0.tar.gz"
+rtorrent_dl: "https://github.com/rakshasa/rtorrent/releases/download/v0.15.0/rtorrent-0.15.0.tar.gz"
 rtorrent_port: 55442
 rt_memory_max_set: "{{ ((ansible_memtotal_mb * 3) / 4) | round | int }}M"
 
@@ -19,7 +19,7 @@ pasv_port_range: 64000-64321
 single_user: false
 
 # 04-rutorrent
-rutorrent_dl: "https://github.com/Novik/ruTorrent/archive/refs/tags/v4.3.0.tar.gz"
+rutorrent_dl: "https://github.com/Novik/ruTorrent/archive/refs/tags/v5.1.5.tar.gz"
 https_port: 443
 htpasswd: !vault |
   $ANSIBLE_VAULT;1.1;AES256
