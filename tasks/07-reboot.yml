@@ -13,15 +13,21 @@
     - php-fpm
     - rtorrent
     - vsftpd
+  tags:
+    - reboot
 
 - name: REBOOT | Reboot a machine
   ansible.builtin.reboot:
     reboot_timeout: 1200
   become: true
   when: require_reboot
+  tags:
+    - reboot
 
 - name: REBOOT | Empty audit.log after the reboot (cannot be done before that)
   community.general.filesize:
     path: "/var/log/audit/audit.log"
     size: 0B
   become: true
+  tags:
+    - reboot

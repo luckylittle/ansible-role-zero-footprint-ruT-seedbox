@@ -4,6 +4,8 @@
   community.general.timezone:
     name: "{{ set_timezone }}"
   become: true
+  tags:
+    - common
 
 - name: COMMON | Add two IPv4 Google DNS servers
   community.general.nmcli:
@@ -15,6 +17,8 @@
     state: present
   become: true
   when: set_google_dns
+  tags:
+    - common
 
 - name: COMMON | Create a directory structure
   ansible.builtin.file:
@@ -42,11 +46,15 @@
     - site/MOVIES-SD
     - site/XXX
     - site/UPLOAD
+  tags:
+    - common
 
 - name: COMMON | Change home folder permissions
   ansible.builtin.file:
     path: /home/{{ ansible_user }}
     mode: 0711
+  tags:
+    - common
 
 - name: COMMON | Remove unnecessary messages of the day
   ansible.builtin.file:
@@ -56,6 +64,8 @@
   loop:
     - "cockpit"
     - "insights-client"
+  tags:
+    - common
 
 - name: COMMON | Add cleanup cron for Torrent files
   ansible.builtin.cron:
@@ -65,6 +75,8 @@
     hour: "0"
     job: "find /home/{{ ansible_user }}/site/.Watch*/*.torrent -type f -ctime +120 -delete"
     backup: true
+  tags:
+    - common
 
 - name: COMMON | Add cleanup cron for the Torrent data
   ansible.builtin.cron:
@@ -73,9 +85,40 @@
     minute: "2"
     hour: "0"
     job: "find /home/{{ ansible_user }}/site/ -maxdepth 2 -mindepth 2 -type d -ctime +120 -exec rm -rf \"{}\" +"
+  tags:
+    - common
 
 - name: COMMON | Add useful alias rt
   ansible.builtin.lineinfile:
     path: "~/.bashrc"
     line: "alias rt=\"tmux a\""
     create: true
+  tags:
+    - common
+
+- name: COMMON | Autobrr service, part 1
+  ansible.builtin.copy:
+    src: autobrr/autobrr\@.service
+    dest: /etc/systemd/system/autobrr\@.service
+    backup: false
+  become: true
+  tags:
+    - common
+
+- name: COMMON | Autobrr service, part 2
+  ansible.builtin.command: "systemctl daemon-reload"
+  become: true
+  tags:
+    - common
+
+- name: COMMON | Autobrr installation, part 1
+  ansible.builtin.copy:
+    src: autobrr/upgrade_autobrr.sh
+    dest: /home/{{ ansible_user }}/upgrade_autobrr.sh
+  tags:
+    - common
+
+- name: COMMON | Autobrr installation, part 2
+  ansible.builtin.command: "/home/{{ ansible_user }}/upgrade_autobrr.sh"
+  tags:
+    - common

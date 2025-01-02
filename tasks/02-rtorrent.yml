@@ -17,6 +17,8 @@
     - tmux
     - wget
     - zlib-devel
+  tags:
+    - rtorrent
 
 - name: RTORRENT | Unzip the xmlrpc, libtorrent & rtorrent
   ansible.builtin.unarchive:
@@ -27,60 +29,82 @@
     - "{{ xmlrpc_dl }}"
     - "{{ libtorrent_dl }}"
     - "{{ rtorrent_dl }}"
+  tags:
+    - rtorrent
 
 - name: RTORRENT | Compile xmlrpc - configure
   ansible.builtin.command: "./configure"
   args:
     chdir: "~/{{ xmlrpc_dl | urlsplit('path') | basename | regex_replace('.tgz') }}"
+  tags:
+    - rtorrent
 
 - name: RTORRENT | Compile xmlrpc - make
   ansible.builtin.command: "make"
   args:
     chdir: "~/{{ xmlrpc_dl | urlsplit('path') | basename | regex_replace('.tgz') }}"
+  tags:
+    - rtorrent
 
 - name: RTORRENT | Compile xmlrpc - make install
   ansible.builtin.command: "make install"
   args:
     chdir: "/home/{{ ansible_user }}/{{ xmlrpc_dl | urlsplit('path') | basename | regex_replace('.tgz') }}"
   become: true
+  tags:
+    - rtorrent
 
 - name: RTORRENT | Compile libtorrent - configure
   ansible.builtin.command: "./configure"
   args:
     chdir: "~/{{ libtorrent_dl | urlsplit('path') | basename | regex_replace('.tar.gz') }}"
+  tags:
+    - rtorrent
 
 - name: RTORRENT | Compile libtorrent - make
   ansible.builtin.command: "make"
   args:
     chdir: "~/{{ libtorrent_dl | urlsplit('path') | basename | regex_replace('.tar.gz') }}"
+  tags:
+    - rtorrent
 
 - name: RTORRENT | Compile libtorrent - make install
   ansible.builtin.command: "make install"
   args:
     chdir: "/home/{{ ansible_user }}/{{ libtorrent_dl | urlsplit('path') | basename | regex_replace('.tar.gz') }}"
   become: true
+  tags:
+    - rtorrent
 
 - name: RTORRENT | Compile rtorrent - configure
-  ansible.builtin.shell: "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig ./configure --with-xmlrpc-c=/usr/local/bin/xmlrpc-c-config"
+  ansible.builtin.shell: "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig ./configure --with-xmlrpc-tinyxml2"
   args:
     chdir: "~/{{ rtorrent_dl | urlsplit('path') | basename | regex_replace('.tar.gz') }}"
+  tags:
+    - rtorrent
 
 - name: RTORRENT | Compile rtorrent - make
   ansible.builtin.command: "make"
   args:
     chdir: "~/{{ rtorrent_dl | urlsplit('path') | basename | regex_replace('.tar.gz') }}"
+  tags:
+    - rtorrent
 
 - name: RTORRENT | Compile rtorrent - make install
   ansible.builtin.command: "make install"
   args:
     chdir: "/home/{{ ansible_user }}/{{ rtorrent_dl | urlsplit('path') | basename | regex_replace('.tar.gz') }}"
   become: true
+  tags:
+    - rtorrent
 
 - name: RTORRENT | Template the configuration for rtorrent
   ansible.builtin.template:
     src: rtorrent/rtorrent.rc.j2
     dest: ~/.rtorrent.rc
     backup: true
+  tags:
+    - rtorrent
 
 - name: RTORRENT | Template a service file for rtorrent
   ansible.builtin.template:
@@ -88,3 +112,5 @@
     src: rtorrent/rtorrent.service.j2
     dest: /etc/systemd/system/rtorrent.service
   become: true
+  tags:
+    - rtorrent

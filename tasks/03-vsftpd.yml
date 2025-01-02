@@ -8,26 +8,36 @@
   loop:
     - python3-cryptography
     - vsftpd
+  tags:
+    - vsftpd
 
 - name: VSFTPD | Create a directory structure for SSL certificates
   ansible.builtin.file:
     path: "/etc/ssl/private"
     state: directory
   become: true
+  tags:
+    - vsftpd
 
 - name: VSFTPD | Determine public IPv4 address
   ansible.builtin.command: curl -4 http://icanhazip.com
   register: public_ip
+  tags:
+    - vsftpd
 
 - name: VSFTPD | Store public IPv4 address as a fact
   ansible.builtin.set_fact:
     ansible_public_ipv4: "{{ public_ip.stdout }}"
     cacheable: true
+  tags:
+    - vsftpd
 
 - name: VSFTPD | Create private key (RSA, 4096 bits)
   community.crypto.openssl_privatekey:
     path: /etc/ssl/private/vsftpd.key
   become: true
+  tags:
+    - vsftpd
 
 - name: VSFTPD | Generate an OpenSSL Certificate Signing Request with Subject information
   community.crypto.openssl_csr:
@@ -40,6 +50,8 @@
     common_name: "{{ ansible_public_ipv4 }}"
     backup: true
   become: true
+  tags:
+    - vsftpd
 
 - name: VSFTPD | Generate a Self Signed OpenSSL certificate
   community.crypto.x509_certificate:
@@ -49,6 +61,8 @@
     provider: selfsigned
     backup: true
   become: true
+  tags:
+    - vsftpd
 
 - name: VSFTPD | Template the configuration for vsftpd
   ansible.builtin.template:
@@ -56,6 +70,8 @@
     dest: /etc/vsftpd/vsftpd.conf
     backup: true
   become: true
+  tags:
+    - vsftpd
 
 - name: VSFTPD | Configure vsftpd for multiple users (in users.txt)
   block:
@@ -94,6 +110,8 @@
         backup: true
   become: true
   when: not single_user
+  tags:
+    - vsftpd
 
 - name: VSFTPD | Create an empty vsftpd.log
   ansible.builtin.copy:
@@ -103,3 +121,5 @@
     group: root
     mode: '0600'
   become: true
+  tags:
+    - vsftpd
