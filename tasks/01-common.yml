@@ -112,7 +112,7 @@
     - common
 
 - name: COMMON | Autobrr installation, part 1
-  ansible.builtin.copy:
+  ansible.builtin.template:
     src: autobrr/upgrade_autobrr.sh
     dest: /home/{{ ansible_user }}/upgrade_autobrr.sh
   tags:
