@@ -30,14 +30,14 @@ trackers.use_udp.set = no
 throttle.global_down.max_rate.set_kb = 0
 throttle.global_up.max_rate.set_kb = 0
 # Maximum number of simultaneous downloads and uploads slots (global slots!) (`max_downloads_global`, `max_uploads_global`)
-throttle.max_downloads.global.set = 600
-throttle.max_uploads.global.set = 600
+throttle.max_downloads.global.set = 0
+throttle.max_uploads.global.set = 0
 # Maximum number of simultaneous downloads and uploads slots per torrent (`max_uploads`) Default: `50` for both
-throttle.max_downloads.set = 300
-throttle.max_uploads.set = 300
+throttle.max_downloads.set = 0
+throttle.max_uploads.set = 0
 # Maximum and minimum number of peers to connect to per torrent while downloading (`min_peers`, `max_peers`) Default: `100` and `200` respectively
-throttle.min_peers.normal.set = 100
-throttle.max_peers.normal.set = 200
+throttle.min_peers.normal.set = 0
+throttle.max_peers.normal.set = 0
 # Same as above but for seeding completed torrents (seeds per torrent), `-1` for same as downloading (`min_peers_seed`, `max_peers_seed`) Default: `-1` for both
 throttle.min_peers.seed.set = -1
 throttle.max_peers.seed.set = -1
@@ -47,9 +47,9 @@ protocol.encryption.set = allow_incoming,try_outgoing,enable_retry
 
 ## Limits for file handle resources. These are the maximum configuration values of rT.
 ## This is typically overwritten by DefaultLimitNOFILE anyway
-network.http.max_open.set = 65536
+network.http.max_open.set = {{ maximum_number_of_open_file_descriptors }}
 network.max_open_files.set = 65536
-network.max_open_sockets.set = 65536
+network.max_open_sockets.set = {{ maximum_number_of_open_file_descriptors }}
 
 ## Memory resource usage (increase if you have a large number of items loaded,
 ## and/or the available resources to spend)
