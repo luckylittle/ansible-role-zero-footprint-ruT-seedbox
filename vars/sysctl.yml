@@ -240,6 +240,9 @@ sysctl_settings:
   # Reuses sockets in TIME-WAIT state for new connections.
   net.ipv4.tcp_tw_reuse: "1"
 
+  # Recycle has been removed from Linux in 4.12
+  # net.ipv4.tcp_tw_recycle: "1"
+
   # Enables TCP window scaling for large file transfers.
   net.ipv4.tcp_window_scaling: "1"
 
