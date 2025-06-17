@@ -39,6 +39,7 @@ cross_seed_config_file: "/home/{{ ansible_user }}/.cross-seed/config.js"
 cross_seed_start_file: "/usr/local/bin/start-cross-seed.sh"
 cross_seed_webhook: "/usr/local/bin/cross-seed-webhook.sh"
 cross_seed_service_file: "/etc/systemd/system/cross-seed.service"
+systemd_tmpfiles_configuration: "/etc/tmpfiles.d/autobrr.conf"
 
 # 02-rtorrent
 epel_url: "https://dl.fedoraproject.org/pub/epel"
