@@ -372,6 +372,16 @@
         mode: "0644"
       become: true
 
+    - name: COMMON | 1.33.11 Add systemd-tmpfiles cross-seed configuration
+      ansible.builtin.template:
+        src: "tmpfiles.d/cross-seed.conf.j2"
+        dest: "{{ systemd_tmpfiles_configuration_cross_seed }}"
+        backup: true
+        mode: "0644"
+      become: true
+      tags:
+        - common
+
 - name: COMMON | 1.34 Restore Autobrr, Mkbrr & Sizechecker files default \
         SELinux security contexts
   ansible.builtin.command: "restorecon -Rv /usr/local/bin/"
@@ -381,10 +391,10 @@
   tags:
     - common
 
-- name: COMMON | 1.35 Add systemd-tmpfiles configuration for Autobrr
+- name: COMMON | 1.35 Add systemd-tmpfiles Autobrr configuration
   ansible.builtin.copy:
     src: "tmpfiles.d/autobrr.conf"
-    dest: "{{ systemd_tmpfiles_configuration }}"
+    dest: "{{ systemd_tmpfiles_configuration_autobrr }}"
     backup: true
     mode: "0644"
   become: true
