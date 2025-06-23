@@ -118,6 +118,7 @@ rutorrent_disabled_plugins:
   - "screenshots"
   - "spectrogram"
   - "throttle"
+  - "trafic"
   - "unpack"
   - "uploadeta"
   - "xmpp"
