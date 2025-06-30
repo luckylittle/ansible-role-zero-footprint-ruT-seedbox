@@ -212,5 +212,9 @@
     name: "{{ item }}"
   become: true
   loop: "{{ cleanup_junk_services }}"
+  register: service_result
+  failed_when:
+    - service_result.failed
+    - "'Could not find the requested service' not in service_result.msg"
   tags:
     - cleanup
