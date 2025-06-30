@@ -143,7 +143,26 @@
   tags:
     - smoke_tests
 
-- name: TEST | 8.14 Show the smoke test results
+- name: TEST | 8.14 Check for cross-seed webhook to be responding
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:2468/api/webhook?apikey={{ cross_seed_api_key }}"
+    return_content: true
+    method: "POST"
+    body_format: "json"
+    body: |
+      {
+        "infoHash": "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ0123",
+        "includeSingleEpisodes": "true"
+      }
+    timeout: "{{ test_timeout }}"
+  register: test_cross_seed
+  failed_when: "test_cross_seed.status != 204"
+  changed_when: false
+  when: cross_seed
+  tags:
+    - smoke_tests
+
+- name: TEST | 8.15 Show the smoke test results
   ansible.builtin.debug:
     msg:
       - "Results:"
@@ -151,23 +170,27 @@
       - "SSH:               {{ test_ssh.state }}"
       - "FTP:               {{ test_ftp.state | default('Not Run') }}"
       - "RTORRENT:          {{ test_rtorrent.state | default('Not Run') }}"
-      - "RTORRENT HTTPRPC:  {{ 'Passed' if not test_rpc.failed else \
-                             'Failed (status ' + \
-                              (test_rpc.status_code | string) + ')' }}"
-      - "RUTORRENT:         {{ 'Passed' if not test_https.failed else \
-                              'Failed (status ' + \
-                              (test_https.status_code | string) + ')' }}"
-      - "AUTOBRR:           {{ 'Passed' if not test_autobrr.failed else \
-                              'Failed (status ' + \
-                              (test_autobrr.status_code | string) + ')' }}"
-      - "AUTOBRR HEALTHZ:   {{ 'Passed' if not healthz_autobrr.failed else \
-                              'Failed (status ' + \
-                              (healthz_autobrr.status_code | string) + ')' }}"
+      - "RTORRENT HTTPRPC:  {{ 'Passed' if not test_rpc.failed else
+                              'Failed (status ' +
+                              (test_rpc.status | string) + ')' }}"
+      - "RUTORRENT:         {{ 'Passed' if not test_https.failed else
+                              'Failed (status ' +
+                              (test_https.status | string) + ')' }}"
+      - "AUTOBRR:           {{ 'Passed' if not test_autobrr.failed else
+                              'Failed (status ' +
+                              (test_autobrr.status | string) + ')' }}"
+      - "AUTOBRR HEALTHZ:   {{ 'Passed' if not healthz_autobrr.failed else
+                              'Failed (status ' +
+                              (healthz_autobrr.status | string) + ')' }}"
+      - "CROSS-SEED:        {{ 'Skipped' if test_cross_seed.skipped
+                            else ('Failed (status ' + (test_cross_seed.status
+                            | string) + ')' if test_cross_seed.failed else
+                            'Passed') }}"
       - "########"
   tags:
     - smoke_tests
 
-- name: TEST | 8.15 Output
+- name: TEST | 8.16 Output
   ansible.builtin.debug:
     msg:
       - "----------------------------------------------------------------"
