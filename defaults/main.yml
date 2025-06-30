@@ -13,8 +13,8 @@ sysctl_tunables: true
 cross_seed: false
 
 # 02-rtorrent
-libtorrent_ver: "0.15.4"
-rtorrent_ver: "0.15.4"
+libtorrent_ver: "0.15.5"
+rtorrent_ver: "0.15.5"
 rtorrent_port: 55442
 
 # 03-vsftpd
