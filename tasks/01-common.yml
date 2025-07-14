@@ -284,7 +284,7 @@
     path: "/home"
     fstype: "{{ home_mount.fstype }}"
     state: "present"
-    opts: "rw,seclabel,noatime,nodiratime,attr2,inode64,noquota"
+    opts: "defaults,noatime,nodiratime"
     backup: true
   become: true
   tags:
