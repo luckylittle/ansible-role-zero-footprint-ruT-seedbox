@@ -182,10 +182,12 @@
       - "AUTOBRR HEALTHZ:   {{ 'Passed' if not healthz_autobrr.failed else
                               'Failed (status ' +
                               (healthz_autobrr.status | string) + ')' }}"
-      - "CROSS-SEED:        {{ 'Skipped' if test_cross_seed.skipped
+      - "CROSS-SEED:        {{ 'Skipped' if (test_cross_seed is not defined
+                            or test_cross_seed.get('skipped', false))
                             else ('Failed (status ' + (test_cross_seed.status
-                            | string) + ')' if test_cross_seed.failed else
-                            'Passed') }}"
+                            | string) + ')' if test_cross_seed.failed
+                            else 'Passed')
+                            }}"
       - "########"
   tags:
     - smoke_tests
