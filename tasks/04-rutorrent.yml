@@ -41,7 +41,7 @@
     owner: "lighttpd"
     group: "lighttpd"
     backup: true
-    mode: "0640"
+    mode: "0664"
   become: true
   tags:
     - rutorrent
@@ -76,7 +76,7 @@
     section: "tabs"
     option: "showPluginsTab"
     value: "no"
-    mode: "0640"
+    mode: "0664"
     backup: true
   become: true
   tags:
