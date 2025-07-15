@@ -38,15 +38,11 @@
   tags:
     - cleanup
 
-- name: CLEANUP | 6.5 Remove unnecessary Autobrr & Sizechecker files
+- name: CLEANUP | 6.5 Remove unnecessary Autobrr & Sizechecker, Mkbrr files
   ansible.builtin.file:
     path: "/home/{{ ansible_user }}/{{ item }}"
     state: "absent"
-  loop:
-    - "autobrr_{{ autobrr_ver }}_linux_x86_64.tar.gz"
-    - "sizechecker_{{ sizechecker_ver }}_linux_amd64.tar.gz"
-    - "LICENSE"
-    - "README.md"
+  loop: "{{ common_tools_homefolder_junk }}"
   tags:
     - cleanup
 
