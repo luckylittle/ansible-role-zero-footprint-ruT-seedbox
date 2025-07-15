@@ -99,6 +99,7 @@
     path: "/etc/php-fpm.conf"
     regexp: '^error_log = /var/log/php-fpm/error.log'
     line: "error_log = syslog"
+    backup: true
   become: true
   notify:
     - "Reload php-fpm"

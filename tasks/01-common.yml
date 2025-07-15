@@ -97,6 +97,7 @@
     path: "~/.bashrc"
     line: "alias rt=\"tmux a\""
     create: true
+    backup: true
     mode: "0644"
   tags:
     - common
@@ -231,6 +232,7 @@
     path: "/etc/systemd/system.conf"
     regexp: '^#DefaultLimitNOFILE=.*'
     line: "DefaultLimitNOFILE={{ maximum_number_of_open_file_descriptors }}"
+    backup: true
   become: true
   tags:
     - common
@@ -241,6 +243,7 @@
     line: "* soft nofile \
           {{ maximum_number_of_open_file_descriptors }}"
     insertbefore: '^# End of file$'
+    backup: true
   become: true
   tags:
     - common
@@ -251,6 +254,7 @@
     line: "* hard nofile \
           {{ maximum_number_of_open_file_descriptors }}"
     insertbefore: '^# End of file$'
+    backup: true
   become: true
   tags:
     - common
@@ -276,7 +280,8 @@
 
 - name: COMMON | 1.29 Get /home mount information
   ansible.builtin.set_fact:
-    home_mount: "{{ ansible_mounts | selectattr('mount', 'equalto', '/home') | list | first }}"
+    home_mount: "{{ ansible_mounts | selectattr('mount', 'equalto', '/home')
+                  | list | first }}"
   tags:
     - common
 

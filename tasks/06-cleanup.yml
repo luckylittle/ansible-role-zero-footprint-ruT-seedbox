@@ -55,6 +55,7 @@
     path: "{{ journald_config_file }}"
     regexp: '^#Storage=.*'
     line: "Storage=volatile"
+    backup: true
   notify:
     - "Restart systemd-journald"
   become: true
