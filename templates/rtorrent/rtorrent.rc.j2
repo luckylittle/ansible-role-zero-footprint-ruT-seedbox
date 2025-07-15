@@ -89,7 +89,7 @@ method.insert = d.data_path, simple,\
     (cat, (d.directory), /, (d.name))"
 method.insert = d.session_file, simple, "cat=(session.path), (d.hash), .torrent"
 {% if cross_seed %}
-method.set_key=event.download.finished,cross_seed,"execute={{{ cross_seed_webhook }},$d.hash=}"
+method.set_key=event.download.finished,cross_seed,"execute={{ '{' }}{{ cross_seed_webhook }},$d.hash={{ '}' }}"
 {% endif %}
 
 ## Watch directories (add more as you like, but use unique schedule names)
