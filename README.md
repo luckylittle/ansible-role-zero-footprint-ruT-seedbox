@@ -5,7 +5,7 @@ luckylittle.zero_footprint_rutorrent_seedbox
 
 <p align="center">
 
-Configures vanilla RHEL8/9 (or CentOS 9) system to be lightweight and bulletproof seedbox running [rTorrent](https://github.com/rakshasa/rtorrent) and [ruTorrent](https://github.com/Novik/ruTorrent). It aims to be secure (SELinux, firewalld, SSL/TLS, [Fail2Ban](https://github.com/fail2ban/fail2ban) enabled) and creates absolutely no logs (a.k.a "zero footprint)". It also provides modern autodownloading capabilities with [Autobrr](https://github.com/autobrr/autobrr). Missing logs will make troubleshooting difficult, but ephemeral journal should be sufficient. Security and simplicity was priroitised over anything else. PRs are most welcome!
+Configures vanilla RHEL8/9 (or CentOS 9) system to be lightweight and bulletproof seedbox running [rTorrent](https://github.com/rakshasa/rtorrent) and [ruTorrent](https://github.com/Novik/ruTorrent). It aims to be secure (SELinux, firewalld, SSL/TLS, [Fail2Ban](https://github.com/fail2ban/fail2ban) enabled) and creates absolutely no logs (a.k.a "zero footprint)". It also provides modern autodownloading capabilities with [Autobrr](https://github.com/autobrr/autobrr) and optional [cross-seed](https://github.com/cross-seed/cross-seed)ing. Missing logs will make troubleshooting difficult, but ephemeral journal should be sufficient. Security and simplicity was priroitised over anything else. PRs are most welcome!
 
 </p>
 
@@ -30,6 +30,7 @@ Common (section 1):
 * `create_new_user` - whether you want to also create another user. Defaults to false. Relevant to the `new_user` variable.
 * `autobrr_ver`, `mkbrr_ver` & `sizechecker_ver` - contains the latest [Autobrr](https://github.com/autobrr/autobrr/releases), [Mkbrr](https://github.com/autobrr/mkbrr) and [Sizechecker](https://github.com/s0up4200/sizechecker/releases) versions. This gets regularly updated after the tests.
 * `sysctl_tunables` - on/off for various tuning options in [sysctl.yml](vars/sysctl.yml). Default is on.
+* `cross_seed` - Optional installation and configuration of the latest [cross-seed](https://github.com/cross-seed/cross-seed/releases) automation tool. Default is false.
 
 _Note:_ Lot of the tasks rely on `remote_user` / `ansible_user` variable (user who logs in to the remote machine via Ansible). For example, it creates directory structure under that user.
 
@@ -39,7 +40,7 @@ rTorrent (section 2):
 * `rtorrent_ver` - Version of the [rtorrent](https://github.com/rakshasa/rtorrent/releases). It should be identical to `libtorrent_ver`.
 * `rtorrent_port` - what port should rtorrent listen on. Default is **55442**.
 
-_Note:_ The ratio defaults should be sufficient (between [400%](vars/main.yml#L59)-[500%](vars/main.yml#L60)).
+_Note:_ The ratio defaults should be sufficient (between [400%](vars/main.yml#L70)-[500%](vars/main.yml#L71)).
 
 vsFTPd (section 3):
 
@@ -55,7 +56,7 @@ ruTorrent (section 4):
 
 Security (section 5):
 
-* `fail2ban_ignore_ipv4` - what IP addresses should be excluded from being banned by Fail2Ban, and the same value is also used in the **firewalld** limited zone for SSH (only these specified addresses are allowed to SSH to the seedbox). Whitelisted is arbitrary address `X.X.X.X` and the private IP ranges. :warning: You **need** to [change it](defaults/main.yml#L39) to your own :warning:
+* `fail2ban_ignore_ipv4` - what IP addresses should be excluded from being banned by Fail2Ban, and the same value is also used in the **firewalld** limited zone for SSH (only these specified addresses are allowed to SSH to the seedbox). Whitelisted is arbitrary address `X.X.X.X` and the private IP ranges. :warning: You **need** to [change it](defaults/main.yml#L40) to your own :warning:
 
 Reboot (section 7):
 
@@ -106,9 +107,9 @@ The following versions were installed during the last RHEL9 test:
 |Package name|Package version      |
 |------------|---------------------|
 |fail2ban    |1.1.0-6.el9.noarch   |
-|libdb-utils |5.3.28-55.el9.x86_64 |
+|libdb-utils |5.3.28-57.el9.x86_64 |
 |lighttpd    |1.4.67-1.el9.x86_64  |
-|php         |8.0.30-1.el9_2.x86_64|
+|php         |8.0.30-3.el9_6.x86_64|
 |tmux        |3.2a-5.el9.x86_64    |
 |vsftpd      |3.0.5-6.el9.x86_64   |
 
@@ -387,21 +388,22 @@ output "instance_dns" {
 
 </details>
 
-Then you can just run add `instance_public_ip` to the [inventory](tests/inventory) and run this Ansible role against the EC2 machine like: `time ansible-playbook -i inventory -u ec2-user test.yml --ask-vault-pass` within the [tests](tests/) folder (`cd tests; ln -s ../../zero_footprint_rutorrent_seedbox .`).
+Then you can just add `instance_public_ip` to the [inventory](tests/inventory) and run this Ansible role against the EC2 machine like: `time ansible-playbook -i inventory -u ec2-user test.yml --ask-vault-pass` within the [tests](tests/) folder (`cd tests; ln -s ../../zero_footprint_rutorrent_seedbox .`).
 
 Services Installed
 ------------------
 
 After you succesfully apply this role, you should be able to see a similar output and access the following services:
 
-|Service        |URL                                                        |
-|---------------|-----------------------------------------------------------|
-|autobrr        |https://<IP_ADDR>:<https_port>/autobrr/                    |
-|autobrr healthz|https://<IP_ADDR>:<https_port>/autobrr/api/healthz/liveness|
-|ftp            |ftps://<IP_ADDR>:<ftp_port>                                |
-|rtorrent rpc   |https://<IP_ADDR>:<https_port>/plugins/httprpc/action.php  |
-|rutorrent      |https://<IP_ADDR>:<https_port>                             |
-|ssh            |ssh://<IP_ADDR>:22                                         |
+|Service               |URL                                                        |
+|----------------------|-----------------------------------------------------------|
+|autobrr               |https://<IP_ADDR>:<https_port>/autobrr/                    |
+|autobrr healthz       |https://<IP_ADDR>:<https_port>/autobrr/api/healthz/liveness|
+|ftp                   |ftps://<IP_ADDR>:<ftp_port>                                |
+|rtorrent rpc          |https://<IP_ADDR>:<https_port>/plugins/httprpc/action.php  |
+|rutorrent             |https://<IP_ADDR>:<https_port>                             |
+|ssh                   |ssh://<IP_ADDR>:22                                         |
+|cross-seed (optional) |http://<127.0.0.1>:2468 (optional)                         |
 
 License
 -------
@@ -418,4 +420,4 @@ Author Information
 
 Lucian Maly <<lmaly@redhat.com>>
 
-_Last update: Wed 04 Jun 2025 05:28:12 UTC_
+_Last update: Tue 15 Jul 2025 01:33:49 UTC_
