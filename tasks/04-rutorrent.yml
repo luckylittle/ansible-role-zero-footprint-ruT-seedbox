@@ -7,16 +7,7 @@
     state: present
     disable_gpg_check: true
   become: true
-  loop:
-    - "lighttpd-fastcgi"
-    - "lighttpd"
-    - "php-dom"
-    - "php-fpm"
-    - "php-json"
-    - "php-libxml"
-    - "php-mbstring"
-    - "php"
-    - "python3-passlib"
+  loop: "{{ rutorrent_required_rpms }}"
   tags:
     - rutorrent
 
@@ -50,7 +41,7 @@
     owner: "lighttpd"
     group: "lighttpd"
     backup: true
-    mode: "0640"
+    mode: "0664"
   become: true
   tags:
     - rutorrent
@@ -85,7 +76,7 @@
     section: "tabs"
     option: "showPluginsTab"
     value: "no"
-    mode: "0640"
+    mode: "0664"
     backup: true
   become: true
   tags:
@@ -108,6 +99,7 @@
     path: "/etc/php-fpm.conf"
     regexp: '^error_log = /var/log/php-fpm/error.log'
     line: "error_log = syslog"
+    backup: true
   become: true
   notify:
     - "Reload php-fpm"
